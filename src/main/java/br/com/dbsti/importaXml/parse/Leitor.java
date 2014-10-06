@@ -259,7 +259,7 @@ public class Leitor {
 
     private static void parseProduto(List<Det> detalhes, Nota nota) throws IOException {
 
-        EntityManager em = EntityManagerDAO.getEntityManager();
+        EntityManager em;
         for (Det detalhe : detalhes) {
 
             Produto produto = new Produto();
@@ -288,7 +288,8 @@ public class Leitor {
             produto.setValorUnitario(Double.parseDouble(detalhe.getProd().getVUnCom()));
             produto.setValorTotal(Double.parseDouble(detalhe.getProd().getVProd()));
             produto.setNota(nota);
-
+            
+            em = EntityManagerDAO.getEntityManager();
             em.persist(produto);
             em.getTransaction().commit();
 
@@ -323,6 +324,8 @@ public class Leitor {
                 em.getTransaction().commit();
 
             } catch (JAXBException ex) {
+                
+            }catch(Exception ex){
                 Log.gravaLog(ex.getMessage());
             }
 

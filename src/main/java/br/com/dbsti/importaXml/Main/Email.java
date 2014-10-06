@@ -21,6 +21,7 @@ import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.internet.MimeMultipart;
 
 /**
  *
@@ -28,20 +29,29 @@ import javax.mail.Store;
  */
 public class Email {
 
-    public void execute(String hostEmail, String protocoloEmail, String usuario, String senha, String diretorioXml, Integer deletaEmail) throws IOException {
+    public void execute(String hostEmail,
+            String protocoloEmail,
+            Integer porta,
+            String usuario,
+            String senha,
+            String diretorioXml,
+            String pastaBackupMensagens) throws IOException {
 
         try {
 
-            String MAIL_POP3_SERVER = hostEmail;
             String nomeDoArquivo = null;
             String nomeDoArquivoXml = null;
             String nomeDoArquivoPdf = null;
+
             Properties props = new Properties();
             Session session = Session.getDefaultInstance(props, null);
             Store store = session.getStore(protocoloEmail);
-            store.connect(MAIL_POP3_SERVER, usuario, senha);
+            store.connect(hostEmail, porta, usuario, senha);
             Folder folder = store.getFolder("INBOX");
             folder.open(Folder.READ_WRITE);
+
+            Folder folderBackup = store.getFolder(pastaBackupMensagens);
+            folderBackup.open(Folder.READ_WRITE);
 
             for (Message message : folder.getMessages()) {
 
@@ -51,64 +61,24 @@ public class Email {
                 Object content = parteMensagem.getContent();
 
                 if (content instanceof Multipart) {
-                    parteMensagem = ((Multipart) content).getBodyPart(0);
-                }
-
-                String contentType = parteMensagem.getContentType();
-
-                if (contentType.startsWith("text/plain") || contentType.startsWith("text/html")) {
-                    InputStream is = parteMensagem.getInputStream();
-
-                    BufferedReader readerArquivo = new BufferedReader(new InputStreamReader(is));
-
-                    String thisLine = readerArquivo.readLine();
-                    while (thisLine != null) {
-                        thisLine = readerArquivo.readLine();
-                    }
-
-                    Log.gravaLog(thisLine);
-
-                } else {
-
-                    Log.gravaLog("Anexo Encontrado... ");
-                    byte[] buf = new byte[4096];
-
-                    String caminhoBase = diretorioXml;
-                    Multipart multi = (Multipart) content;
-
-                    for (int i = 0; i < multi.getCount(); i++) {
-                        nomeDoArquivo = multi.getBodyPart(i).getFileName();
-                        if (nomeDoArquivo != null && nomeDoArquivo.contains("pdf")) {
-                            InputStream is = multi.getBodyPart(i).getInputStream();
-                            FileOutputStream fos = new FileOutputStream(caminhoBase + nomeDoArquivo);
-                            int bytesRead;
-                            while ((bytesRead = is.read(buf)) != -1) {
-                                fos.write(buf, 0, bytesRead);
-                            }
-                            fos.close();
-                            nomeDoArquivoPdf = nomeDoArquivo;
-                            Log.gravaLog("Download do PDF da nota " + nomeDoArquivoPdf + " realizado com sucesso.");
-                        } else if (nomeDoArquivo != null && nomeDoArquivo.contains("xml")) {
-                            InputStream is = multi.getBodyPart(i).getInputStream();
-                            FileOutputStream fos = new FileOutputStream(caminhoBase + nomeDoArquivo);
-                            int bytesRead;
-                            while ((bytesRead = is.read(buf)) != -1) {
-                                fos.write(buf, 0, bytesRead);
-                            }
-                            nomeDoArquivoXml = nomeDoArquivo;
-                            fos.close();
-                            Log.gravaLog("Download do XML da nota " + nomeDoArquivoXml + " realizado com sucesso.");
-                        }
-                    }
-                    if (nomeDoArquivoXml != null) {
-                        Leitor.ler(caminhoBase + nomeDoArquivoXml, caminhoBase + nomeDoArquivoPdf);
+                    MimeMultipart mmp = (MimeMultipart) message.getContent();
+                    for (int contador = 0; contador < mmp.getCount(); contador++) {
+                        parteMensagem = ((Multipart) mmp).getBodyPart(contador);
+                        String contentType = parteMensagem.getContentType();
+                        downloadAnexo(contentType,
+                                parteMensagem,
+                                diretorioXml,
+                                content,
+                                nomeDoArquivo,
+                                nomeDoArquivoPdf,
+                                nomeDoArquivoXml);
                     }
                 }
-                if (deletaEmail == 1) {
-                    message.setFlag(Flags.Flag.DELETED, true);
-                }
+                moveMensagemLida(message, folder, folderBackup);
             }
+
             folder.close(true);
+            folderBackup.close(true);
             store.close();
         } catch (FolderClosedException f) {
             Log.gravaLog("ERRO FolderClosedException: " + f.getMessage());
@@ -116,6 +86,64 @@ public class Email {
             Log.gravaLog("ERRO MessagingException: " + m.getMessage());
         } catch (IOException i) {
             Log.gravaLog("ERRO IOException: " + i.getMessage());
+        }
+    }
+
+    private static void downloadAnexo(String contentType,
+            Part parteMensagem,
+            String diretorioXml,
+            Object content,
+            String nomeDoArquivo,
+            String nomeDoArquivoPdf,
+            String nomeDoArquivoXml) throws IOException, MessagingException {
+
+        if (!contentType.startsWith("text/plain") & !contentType.startsWith("text/html")) {
+                    
+            Log.gravaLog("Anexo Encontrado... ");
+            byte[] buf = new byte[4096];
+
+            String caminhoBase = diretorioXml;
+            Multipart multi = (Multipart) content;
+
+            for (int i = 0; i < multi.getCount(); i++) {
+                nomeDoArquivo = multi.getBodyPart(i).getFileName();
+                if (nomeDoArquivo != null && nomeDoArquivo.contains("pdf")) {
+                    InputStream is = multi.getBodyPart(i).getInputStream();
+                    FileOutputStream fos = new FileOutputStream(caminhoBase + nomeDoArquivo);
+                    int bytesRead;
+                    while ((bytesRead = is.read(buf)) != -1) {
+                        fos.write(buf, 0, bytesRead);
+                    }
+                    fos.close();
+                    nomeDoArquivoPdf = nomeDoArquivo;
+                    Log.gravaLog("Download do PDF da nota " + nomeDoArquivoPdf + " realizado com sucesso.");
+                } else if (nomeDoArquivo != null && nomeDoArquivo.contains("xml")) {
+                    InputStream is = multi.getBodyPart(i).getInputStream();
+                    FileOutputStream fos = new FileOutputStream(caminhoBase + nomeDoArquivo);
+                    int bytesRead;
+                    while ((bytesRead = is.read(buf)) != -1) {
+                        fos.write(buf, 0, bytesRead);
+                    }
+                    nomeDoArquivoXml = nomeDoArquivo;
+                    fos.close();
+                    Log.gravaLog("Download do XML da nota " + nomeDoArquivoXml + " realizado com sucesso.");
+                }
+            }
+            if (nomeDoArquivoXml != null) {
+                Leitor.ler(caminhoBase + nomeDoArquivoXml, caminhoBase + nomeDoArquivoPdf);
+            }
+        }
+    }
+
+    private static void moveMensagemLida(Message message, Folder folderOrigem, Folder folderDestino) throws IOException {
+        try {
+            message.setFlag(Flags.Flag.SEEN, true);
+            Message[] mensagemCopia = new Message[1];
+            mensagemCopia[0] = message;
+            folderOrigem.copyMessages(mensagemCopia, folderDestino);
+            message.setFlag(Flags.Flag.DELETED, true);
+        } catch (MessagingException ex) {
+            Log.gravaLog(ex.getMessage());
         }
     }
 

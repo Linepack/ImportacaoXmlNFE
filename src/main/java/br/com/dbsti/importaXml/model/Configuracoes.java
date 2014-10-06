@@ -49,15 +49,26 @@ public class Configuracoes implements Serializable {
     @Column
     private String diretorioXml;
     
-    private Integer deletaEmail;
+    private String pastaBackupMensagens;
+    
+    private Integer portaProtocolo;
 
-    public Integer getDeletaEmail() {
-        return deletaEmail;
+    public String getPastaBackupMensagens() {
+        return pastaBackupMensagens;
     }
 
-    public void setDeletaEmail(Integer deletaEmail) {
-        this.deletaEmail = deletaEmail;
+    public void setPastaBackupMensagens(String pastaBackupMensagens) {
+        this.pastaBackupMensagens = pastaBackupMensagens;
     }
+
+    public Integer getPortaProtocolo() {
+        return portaProtocolo;
+    }
+
+    public void setPortaProtocolo(Integer portaProtocolo) {
+        this.portaProtocolo = portaProtocolo;
+    }
+    
     
     
 

@@ -14,10 +14,10 @@
     <class>br.com.dbsti.importaXml.model.ProdutoNota</class>
     <class>br.com.dbsti.importaXml.model.Tributo</class>
     <properties>
-      <property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin:@localhost:1521:XE"/>
-      <property name="javax.persistence.jdbc.password" value="F110987"/>
+      <property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin:@192.168.1.125:1521:UNIWEB"/>
+      <property name="javax.persistence.jdbc.password" value="importacaonota"/>
       <property name="javax.persistence.jdbc.driver" value="oracle.jdbc.OracleDriver"/>
-      <property name="javax.persistence.jdbc.user" value="IMPORTACAONFE"/>
+      <property name="javax.persistence.jdbc.user" value="importacaonota"/>
       <property name="javax.persistence.schema-generation.database.action" value="create"/>
     </properties>
   </persistence-unit>
