@@ -27,10 +27,10 @@ import javax.mail.internet.MimeMultipart;
  */
 public class Email {
 
-    private static String nomeDoArquivo = null;
-    private static String nomeDoArquivoXml = null;
-    private static String nomeDoArquivoPdf = null;
-    private static String diretorio = null;
+    private static String nomeDoArquivo;
+    private static String nomeDoArquivoXml;
+    private static String nomeDoArquivoPdf;
+    private static String diretorio;
 
     public void execute(String hostEmail,
             String protocoloEmail,
@@ -38,11 +38,15 @@ public class Email {
             String usuario,
             String senha,
             String diretorioXml,
-            String pastaBackupMensagens) throws IOException {
+            String pastaBackupMensagens,
+            String pastaErroMensagens) throws IOException {
 
         try {
-
+            nomeDoArquivoXml = null;
+            nomeDoArquivoPdf = null;
+            nomeDoArquivo = null;
             diretorio = diretorioXml;
+            
             Properties props = new Properties();
             Session session = Session.getDefaultInstance(props, null);
             Store store = session.getStore(protocoloEmail);
@@ -53,8 +57,11 @@ public class Email {
             Folder folderBackup = store.getFolder(pastaBackupMensagens);
             folderBackup.open(Folder.READ_WRITE);
 
+            Folder folderErro = store.getFolder(pastaErroMensagens);
+            folderErro.open(Folder.READ_WRITE);
+
             for (Message message : folder.getMessages()) {
-                
+
                 Log.gravaLog("Novo Email recebido. Remetente: " + message.getFrom()[0] + ", Assunto: " + message.getSubject());
 
                 Part parteMensagem = message;
@@ -68,10 +75,15 @@ public class Email {
                         downloadAnexo(contentType, mmp, contador);
                     }
                     if (nomeDoArquivoXml != null) {
-                        Leitor.ler(diretorio + nomeDoArquivoXml, diretorio + nomeDoArquivoPdf);                        
+                        Leitor.ler(diretorio + nomeDoArquivoXml, diretorio + nomeDoArquivoPdf);
                     }
                 }
-                moveMensagemLida(message, folder, folderBackup);
+                
+                if (Leitor.algoErrado) {
+                    moveMensagem(message, folder, folderErro);
+                } else {
+                    moveMensagem(message, folder, folderBackup);
+                }
             }
 
             folder.close(true);
@@ -106,7 +118,7 @@ public class Email {
                 fos.close();
                 nomeDoArquivoPdf = nomeDoArquivo;
                 Log.gravaLog("Download do PDF da nota " + nomeDoArquivoPdf + " realizado com sucesso.");
-            } else if (nomeDoArquivo != null && nomeDoArquivo.toUpperCase().contains("XML") ) {
+            } else if (nomeDoArquivo != null && nomeDoArquivo.toUpperCase().contains("XML")) {
                 InputStream is = multi.getBodyPart(indexMultPart).getInputStream();
                 FileOutputStream fos = new FileOutputStream(diretorio + nomeDoArquivo);
                 int bytesRead;
@@ -120,7 +132,7 @@ public class Email {
         }
     }
 
-    private static void moveMensagemLida(Message message, Folder folderOrigem, Folder folderDestino) throws IOException {
+    private static void moveMensagem(Message message, Folder folderOrigem, Folder folderDestino) throws IOException {
         try {
             message.setFlag(Flags.Flag.SEEN, true);
             Message[] mensagemCopia = new Message[1];

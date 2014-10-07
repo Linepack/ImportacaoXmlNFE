@@ -52,6 +52,18 @@ public class Configuracoes implements Serializable {
     private String pastaBackupMensagens;
     
     private Integer portaProtocolo;
+    
+    private String pastaErroMensagens;
+
+    public String getPastaErroMensagens() {
+        return pastaErroMensagens;
+    }
+
+    public void setPastaErroMensagens(String pastaErroMensagens) {
+        this.pastaErroMensagens = pastaErroMensagens;
+    }
+    
+    
 
     public String getPastaBackupMensagens() {
         return pastaBackupMensagens;

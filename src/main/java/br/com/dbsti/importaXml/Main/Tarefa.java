@@ -87,7 +87,8 @@ public class Tarefa {
                                 config.getUsuario(),
                                 config.getSenha(),
                                 config.getDiretorioXml(),
-                                config.getPastaBackupMensagens());
+                                config.getPastaBackupMensagens(),
+                                config.getPastaErroMensagens());
                     } catch (IOException ex) {
                         Logger.getLogger(Tarefa.class.getName()).log(Level.SEVERE, null, ex);
                     }

@@ -46,6 +46,9 @@ import javax.xml.bind.Unmarshaller;
  */
 public class Leitor {
 
+    private static EntityManager em;
+    public static Boolean algoErrado = false;
+
     public static void ler(String pathArquivoXml, String pathArquivoPdf) throws IOException {
 
         try {
@@ -56,12 +59,22 @@ public class Leitor {
             Unmarshaller u = contexto.createUnmarshaller();
             TNfeProc notaFiscal = (TNfeProc) u.unmarshal(file);
 
+            em = EntityManagerDAO.getEntityManager();
             parse(notaFiscal, pathArquivoXml, pathArquivoPdf);
+            em.close();
 
-            Log.gravaLog("Parse realizado com sucesso! ");
+            if (!algoErrado) {
+                Log.gravaLog("Parse realizado com sucesso! ");
+            }
+
         } catch (IOException ex) {
+            algoErrado = true;
+            em.getTransaction().rollback();
             Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
         } catch (JAXBException ex) {
+            algoErrado = true;
+            em.getTransaction().rollback();
+            Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
             Log.gravaLog(ex.getMessage());
         }
 
@@ -70,14 +83,13 @@ public class Leitor {
     private static void parse(TNfeProc nfe, String pathXml, String pathPdf) throws IOException {
 
         Nota nfeMestre = new Nota();
-        EntityManager em = EntityManagerDAO.getEntityManager();
         Query query = em.createQuery("select n from Nota n where n.chaveAcesso = '" + nfe.getProtNFe().getInfProt().getChNFe() + "'");
 
         for (Object object : query.getResultList()) {
             nfeMestre = (Nota) object;
         }
 
-        if (nfeMestre.getChaveAcesso() != null) {
+        if (nfeMestre.getChaveAcesso() != null) {            
             Log.gravaLog("Nota Fiscal já existente, verifique!");
         } else {
 
@@ -124,7 +136,6 @@ public class Leitor {
                 }
 
                 em.persist(nfeMestre);
-                em.getTransaction().commit();
 
                 if (nfe.getNFe().getInfNFe().getCobr() != null) {
                     parsePagamento(nfe.getNFe().getInfNFe().getCobr().getDup(), nfeMestre);
@@ -132,7 +143,13 @@ public class Leitor {
 
                 parseProduto(nfe.getNFe().getInfNFe().getDet(), nfeMestre);
 
+                if (!algoErrado) {
+                    em.getTransaction().commit();
+                }
+
             } catch (ParseException ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
                 Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -143,7 +160,6 @@ public class Leitor {
 
         Emitente nfeEmitente = new Emitente();
 
-        EntityManager em = EntityManagerDAO.getEntityManager();
         Query query = em.createQuery("select e "
                 + "from Emitente e "
                 + "where e.cnpj = '" + emit.getCNPJ() + "'");
@@ -189,7 +205,6 @@ public class Leitor {
 
             em.persist(enderecoEmitente);
             em.persist(nfeEmitente);
-            em.getTransaction().commit();
         }
 
         return nfeEmitente;
@@ -198,7 +213,6 @@ public class Leitor {
     private static Destinatario parseDestinatario(Dest dest) {
         Destinatario destinatario = new Destinatario();
 
-        EntityManager em = EntityManagerDAO.getEntityManager();
         Query query = em.createQuery("select d from Destinatario d where d.cnpj = '" + dest.getCNPJ() + "'");
 
         for (Object object : query.getResultList()) {
@@ -208,7 +222,6 @@ public class Leitor {
         if (destinatario.getCnpj() == null) {
             destinatario.setCnpj(dest.getCNPJ());
             em.persist(destinatario);
-            em.getTransaction().commit();
         }
 
         return destinatario;
@@ -218,7 +231,6 @@ public class Leitor {
 
         Transportador transportador = new Transportador();
 
-        EntityManager em = EntityManagerDAO.getEntityManager();
         Query query = em.createQuery("select t from Transportador t where t.cnpj = '" + transporta.getCNPJ() + "'");
 
         for (Object object : query.getResultList()) {
@@ -234,7 +246,6 @@ public class Leitor {
             transportador.setSiglaEstado(transporta.getUF().value());
 
             em.persist(transportador);
-            em.getTransaction().commit();
         }
 
         return transportador;
@@ -242,7 +253,6 @@ public class Leitor {
 
     private static void parsePagamento(List<Dup> duplicatas, Nota nota) throws ParseException {
 
-        EntityManager em = EntityManagerDAO.getEntityManager();
         for (Dup duplicata : duplicatas) {
             Pagamento pagamento = new Pagamento();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -254,12 +264,10 @@ public class Leitor {
 
             em.persist(pagamento);
         }
-        em.getTransaction().commit();
     }
 
     private static void parseProduto(List<Det> detalhes, Nota nota) throws IOException {
 
-        EntityManager em;
         for (Det detalhe : detalhes) {
 
             Produto produto = new Produto();
@@ -288,20 +296,17 @@ public class Leitor {
             produto.setValorUnitario(Double.parseDouble(detalhe.getProd().getVUnCom()));
             produto.setValorTotal(Double.parseDouble(detalhe.getProd().getVProd()));
             produto.setNota(nota);
-            
-            em = EntityManagerDAO.getEntityManager();
+
             em.persist(produto);
-            em.getTransaction().commit();
 
             parseTributoCofins(detalhe.getImposto().getContent(), produto);
 
-        }        
+        }
 
     }
 
     private static void parseTributoCofins(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
-
-        EntityManager em = EntityManagerDAO.getEntityManager();
+        
         COFINS cofins;
         for (Object object : jaxbImpostos) {
             try {
@@ -309,7 +314,7 @@ public class Leitor {
                 JAXBContext contexto = JAXBContext.newInstance(COFINS.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
-                
+
                 Unmarshaller u = contexto.createUnmarshaller();
                 cofins = (COFINS) u.unmarshal(file);
 
@@ -321,11 +326,13 @@ public class Leitor {
                 tributoCofins.setProduto(produto);
                 tributoCofins.setValor(Double.parseDouble(cofins.getCOFINSAliq().getVCOFINS()));
                 em.persist(tributoCofins);
-                em.getTransaction().commit();
 
             } catch (JAXBException ex) {
-                
-            }catch(Exception ex){
+
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
                 Log.gravaLog(ex.getMessage());
             }
 
