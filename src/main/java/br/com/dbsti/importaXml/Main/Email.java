@@ -42,11 +42,8 @@ public class Email {
             String pastaErroMensagens) throws IOException {
 
         try {
-            nomeDoArquivoXml = null;
-            nomeDoArquivoPdf = null;
-            nomeDoArquivo = null;
             diretorio = diretorioXml;
-            
+
             Properties props = new Properties();
             Session session = Session.getDefaultInstance(props, null);
             Store store = session.getStore(protocoloEmail);
@@ -62,6 +59,10 @@ public class Email {
 
             for (Message message : folder.getMessages()) {
 
+                nomeDoArquivoXml = null;
+                nomeDoArquivoPdf = null;
+                nomeDoArquivo = null;
+                
                 Log.gravaLog("Novo Email recebido. Remetente: " + message.getFrom()[0] + ", Assunto: " + message.getSubject());
 
                 Part parteMensagem = message;
@@ -78,7 +79,7 @@ public class Email {
                         Leitor.ler(diretorio + nomeDoArquivoXml, diretorio + nomeDoArquivoPdf);
                     }
                 }
-                
+
                 if (Leitor.algoErrado) {
                     moveMensagem(message, folder, folderErro);
                 } else {
