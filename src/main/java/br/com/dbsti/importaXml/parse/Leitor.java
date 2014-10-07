@@ -46,7 +46,7 @@ import javax.xml.bind.Unmarshaller;
  */
 public class Leitor {
 
-    public static void ler(String pathArquivoXml, String pathArquivoPdf) {
+    public static void ler(String pathArquivoXml, String pathArquivoPdf) throws IOException {
 
         try {
             Log.gravaLog("Realizando Parse do Xml... ");
@@ -62,7 +62,7 @@ public class Leitor {
         } catch (IOException ex) {
             Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
         } catch (JAXBException ex) {
-            Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+            Log.gravaLog(ex.getMessage());
         }
 
     }
@@ -265,7 +265,7 @@ public class Leitor {
             Produto produto = new Produto();
 
             produto.setCfop(Integer.parseInt(detalhe.getProd().getCFOP()));
-            produto.setCodigo(Integer.parseInt(detalhe.getProd().getCProd()));
+            produto.setCodigo(detalhe.getProd().getCProd());
             produto.setCodigoBarras(detalhe.getProd().getCEAN());
             produto.setDescricao(detalhe.getProd().getXProd());
             produto.setDescricaoItemPedido(detalhe.getProd().getNItemPed());

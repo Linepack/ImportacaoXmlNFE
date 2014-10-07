@@ -23,7 +23,7 @@ public class Produto implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private Integer codigo;
+    private String codigo;
     private Integer sequenciaItemNota;
     private String codigoBarras;
     private String descricao;
@@ -58,11 +58,11 @@ public class Produto implements Serializable {
         this.sequenciaItemNota = sequenciaItemNota;
     }
 
-    public Integer getCodigo() {
+    public String getCodigo() {
         return codigo;
     }
 
-    public void setCodigo(Integer codigo) {
+    public void setCodigo(String codigo) {
         this.codigo = codigo;
     }
 

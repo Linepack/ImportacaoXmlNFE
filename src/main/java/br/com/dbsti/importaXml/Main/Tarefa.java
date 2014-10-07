@@ -31,7 +31,7 @@ public class Tarefa {
                 Log.gravaLog("Você precisa configurar seu BANCO DE DADOS, verifique a tabela CONFIGURACOES.");
             } else {
                 certificaConexao();
-                PATH_LOG = config.getDiretorioProjeto();
+                PATH_LOG = config.getDiretorioProjeto();                
                 executaTimer();
             }
         } catch (Exception ex) {
@@ -67,19 +67,19 @@ public class Tarefa {
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
     }
 
-    private static void executaTimer() throws IOException {
-        Log.gravaLog("Verificando Email's... ");
+    private static void executaTimer() throws IOException {        
+        
         Timer timer = null;
         if (timer == null) {
             timer = new Timer();
-            TimerTask tarefa;
-
+            TimerTask tarefa;            
             tarefa = new TimerTask() {
-
+                
                 @Override
                 public void run() {
-
-                    try {
+                    
+                    try {                        
+                        Log.gravaLog("Verificando Email's... ");
                         Email email = new Email();
                         email.execute(config.getHostEmail(),
                                 config.getProtocoloLeitura(),
@@ -93,7 +93,7 @@ public class Tarefa {
                     }
                 }
             };
-            timer.scheduleAtFixedRate(tarefa, config.getSegundosIntervaloLeitura(), config.getSegundosIntervaloLeitura());
+            timer.scheduleAtFixedRate(tarefa, config.getSegundosIntervaloLeitura()*1000, config.getSegundosIntervaloLeitura()*1000);                        
         }
     }
 

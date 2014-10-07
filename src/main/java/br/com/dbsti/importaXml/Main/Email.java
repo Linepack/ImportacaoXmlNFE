@@ -6,11 +6,9 @@
 package br.com.dbsti.importaXml.Main;
 
 import br.com.dbsti.importaXml.parse.Leitor;
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Properties;
 import javax.mail.Flags;
 import javax.mail.Folder;
@@ -29,6 +27,11 @@ import javax.mail.internet.MimeMultipart;
  */
 public class Email {
 
+    private static String nomeDoArquivo = null;
+    private static String nomeDoArquivoXml = null;
+    private static String nomeDoArquivoPdf = null;
+    private static String diretorio = null;
+
     public void execute(String hostEmail,
             String protocoloEmail,
             Integer porta,
@@ -39,10 +42,7 @@ public class Email {
 
         try {
 
-            String nomeDoArquivo = null;
-            String nomeDoArquivoXml = null;
-            String nomeDoArquivoPdf = null;
-
+            diretorio = diretorioXml;
             Properties props = new Properties();
             Session session = Session.getDefaultInstance(props, null);
             Store store = session.getStore(protocoloEmail);
@@ -54,8 +54,8 @@ public class Email {
             folderBackup.open(Folder.READ_WRITE);
 
             for (Message message : folder.getMessages()) {
-
-                Log.gravaLog("Novo Email recebido... ");
+                
+                Log.gravaLog("Novo Email recebido. Remetente: " + message.getFrom()[0] + ", Assunto: " + message.getSubject());
 
                 Part parteMensagem = message;
                 Object content = parteMensagem.getContent();
@@ -65,13 +65,10 @@ public class Email {
                     for (int contador = 0; contador < mmp.getCount(); contador++) {
                         parteMensagem = ((Multipart) mmp).getBodyPart(contador);
                         String contentType = parteMensagem.getContentType();
-                        downloadAnexo(contentType,
-                                parteMensagem,
-                                diretorioXml,
-                                content,
-                                nomeDoArquivo,
-                                nomeDoArquivoPdf,
-                                nomeDoArquivoXml);
+                        downloadAnexo(contentType, mmp, contador);
+                    }
+                    if (nomeDoArquivoXml != null) {
+                        Leitor.ler(diretorio + nomeDoArquivoXml, diretorio + nomeDoArquivoPdf);                        
                     }
                 }
                 moveMensagemLida(message, folder, folderBackup);
@@ -89,48 +86,36 @@ public class Email {
         }
     }
 
-    private static void downloadAnexo(String contentType,
-            Part parteMensagem,
-            String diretorioXml,
-            Object content,
-            String nomeDoArquivo,
-            String nomeDoArquivoPdf,
-            String nomeDoArquivoXml) throws IOException, MessagingException {
+    private static void downloadAnexo(String contentType, MimeMultipart multi, Integer indexMultPart) throws IOException, MessagingException {
 
         if (!contentType.startsWith("text/plain") & !contentType.startsWith("text/html")) {
-                    
-            Log.gravaLog("Anexo Encontrado... ");
-            byte[] buf = new byte[4096];
 
-            String caminhoBase = diretorioXml;
-            Multipart multi = (Multipart) content;
-
-            for (int i = 0; i < multi.getCount(); i++) {
-                nomeDoArquivo = multi.getBodyPart(i).getFileName();
-                if (nomeDoArquivo != null && nomeDoArquivo.contains("pdf")) {
-                    InputStream is = multi.getBodyPart(i).getInputStream();
-                    FileOutputStream fos = new FileOutputStream(caminhoBase + nomeDoArquivo);
-                    int bytesRead;
-                    while ((bytesRead = is.read(buf)) != -1) {
-                        fos.write(buf, 0, bytesRead);
-                    }
-                    fos.close();
-                    nomeDoArquivoPdf = nomeDoArquivo;
-                    Log.gravaLog("Download do PDF da nota " + nomeDoArquivoPdf + " realizado com sucesso.");
-                } else if (nomeDoArquivo != null && nomeDoArquivo.contains("xml")) {
-                    InputStream is = multi.getBodyPart(i).getInputStream();
-                    FileOutputStream fos = new FileOutputStream(caminhoBase + nomeDoArquivo);
-                    int bytesRead;
-                    while ((bytesRead = is.read(buf)) != -1) {
-                        fos.write(buf, 0, bytesRead);
-                    }
-                    nomeDoArquivoXml = nomeDoArquivo;
-                    fos.close();
-                    Log.gravaLog("Download do XML da nota " + nomeDoArquivoXml + " realizado com sucesso.");
-                }
+            nomeDoArquivo = multi.getBodyPart(indexMultPart).getFileName();
+            if (nomeDoArquivo != null) {
+                Log.gravaLog("Anexo Encontrado: " + nomeDoArquivo);
             }
-            if (nomeDoArquivoXml != null) {
-                Leitor.ler(caminhoBase + nomeDoArquivoXml, caminhoBase + nomeDoArquivoPdf);
+
+            byte[] buf = new byte[4096];
+            if (nomeDoArquivo != null && nomeDoArquivo.toUpperCase().contains("PDF")) {
+                InputStream is = multi.getBodyPart(indexMultPart).getInputStream();
+                FileOutputStream fos = new FileOutputStream(diretorio + nomeDoArquivo);
+                int bytesRead;
+                while ((bytesRead = is.read(buf)) != -1) {
+                    fos.write(buf, 0, bytesRead);
+                }
+                fos.close();
+                nomeDoArquivoPdf = nomeDoArquivo;
+                Log.gravaLog("Download do PDF da nota " + nomeDoArquivoPdf + " realizado com sucesso.");
+            } else if (nomeDoArquivo != null && nomeDoArquivo.toUpperCase().contains("XML") ) {
+                InputStream is = multi.getBodyPart(indexMultPart).getInputStream();
+                FileOutputStream fos = new FileOutputStream(diretorio + nomeDoArquivo);
+                int bytesRead;
+                while ((bytesRead = is.read(buf)) != -1) {
+                    fos.write(buf, 0, bytesRead);
+                }
+                nomeDoArquivoXml = nomeDoArquivo;
+                fos.close();
+                Log.gravaLog("Download do XML da nota " + nomeDoArquivoXml + " realizado com sucesso.");
             }
         }
     }
