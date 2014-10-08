@@ -19,6 +19,13 @@ import br.inf.portalfiscal.nfe.TNFe.InfNFe.Cobr.Dup;
 import br.inf.portalfiscal.nfe.TNFe.InfNFe.Dest;
 import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det;
 import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det.Imposto.COFINS;
+import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det.Imposto.PIS;
+import br.inf.portalfiscal.nfe.TIpi;
+import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det.Imposto.COFINSST;
+import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det.Imposto.ICMS;
+import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det.Imposto.II;
+import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det.Imposto.ISSQN;
+import br.inf.portalfiscal.nfe.TNFe.InfNFe.Det.Imposto.PISST;
 import br.inf.portalfiscal.nfe.TNFe.InfNFe.Emit;
 import br.inf.portalfiscal.nfe.TNFe.InfNFe.Ide;
 import br.inf.portalfiscal.nfe.TNFe.InfNFe.Transp.Transporta;
@@ -89,7 +96,7 @@ public class Leitor {
             nfeMestre = (Nota) object;
         }
 
-        if (nfeMestre.getChaveAcesso() != null) {            
+        if (nfeMestre.getChaveAcesso() != null) {
             Log.gravaLog("Nota Fiscal já existente, verifique!");
         } else {
 
@@ -300,17 +307,24 @@ public class Leitor {
             em.persist(produto);
 
             parseTributoCofins(detalhe.getImposto().getContent(), produto);
+            parseTributoCofinsST(detalhe.getImposto().getContent(), produto);
+            parseTributoPis(detalhe.getImposto().getContent(), produto);
+            parseTributoPisST(detalhe.getImposto().getContent(), produto);
+            parseTributoIpi(detalhe.getImposto().getContent(), produto);
+            parseTributoISSQN(detalhe.getImposto().getContent(), produto);
+            parseTributoII(detalhe.getImposto().getContent(), produto);
+            parseTributoIcms(detalhe.getImposto().getContent(), produto);
 
         }
 
     }
 
     private static void parseTributoCofins(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
-        
+
         COFINS cofins;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("imposto.xml");
+                File file = new File("cofins.xml");
                 JAXBContext contexto = JAXBContext.newInstance(COFINS.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -319,16 +333,372 @@ public class Leitor {
                 cofins = (COFINS) u.unmarshal(file);
 
                 Tributo tributoCofins = new Tributo();
-                tributoCofins.setAliquota(Double.parseDouble(cofins.getCOFINSAliq().getPCOFINS()));
-                tributoCofins.setBaseCalculo(Double.parseDouble(cofins.getCOFINSAliq().getVBC()));
-                tributoCofins.setCst(cofins.getCOFINSAliq().getCST());
-                tributoCofins.setNome("COFINS");
-                tributoCofins.setProduto(produto);
-                tributoCofins.setValor(Double.parseDouble(cofins.getCOFINSAliq().getVCOFINS()));
-                em.persist(tributoCofins);
+
+                if (cofins.getCOFINSAliq() != null) {
+                    tributoCofins.setAliquota(Double.parseDouble(cofins.getCOFINSAliq().getPCOFINS()));
+                    tributoCofins.setBaseCalculo(Double.parseDouble(cofins.getCOFINSAliq().getVBC()));
+                    tributoCofins.setCst(cofins.getCOFINSAliq().getCST());
+                    tributoCofins.setNome("COFINS");
+                    tributoCofins.setProduto(produto);
+                    tributoCofins.setValor(Double.parseDouble(cofins.getCOFINSAliq().getVCOFINS()));
+                    em.persist(tributoCofins);
+                }
 
             } catch (JAXBException ex) {
 
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+                Log.gravaLog(ex.getMessage());
+            }
+
+        }
+
+    }
+
+    private static void parseTributoCofinsST(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
+
+        COFINSST cofins;
+        for (Object object : jaxbImpostos) {
+            try {
+                File file = new File("cofinsst.xml");
+                JAXBContext contexto = JAXBContext.newInstance(COFINSST.class);
+                Marshaller m = contexto.createMarshaller();
+                m.marshal(object, file);
+
+                Unmarshaller u = contexto.createUnmarshaller();
+                cofins = (COFINSST) u.unmarshal(file);
+
+                Tributo tributoCofins = new Tributo();
+
+                if (cofins != null) {
+                    tributoCofins.setAliquota(Double.parseDouble(cofins.getPCOFINS()));
+                    tributoCofins.setBaseCalculo(Double.parseDouble(cofins.getVBC()));
+                    tributoCofins.setNome("COFINSST");
+                    tributoCofins.setProduto(produto);
+                    tributoCofins.setValor(Double.parseDouble(cofins.getVCOFINS()));
+                    em.persist(tributoCofins);
+                }
+
+            } catch (JAXBException ex) {
+
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+                Log.gravaLog(ex.getMessage());
+            }
+
+        }
+
+    }
+
+    private static void parseTributoPis(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
+
+        PIS pis;
+        for (Object object : jaxbImpostos) {
+            try {
+                File file = new File("pis.xml");
+                JAXBContext contexto = JAXBContext.newInstance(PIS.class);
+                Marshaller m = contexto.createMarshaller();
+                m.marshal(object, file);
+
+                Unmarshaller u = contexto.createUnmarshaller();
+                pis = (PIS) u.unmarshal(file);
+
+                Tributo tributoPis = new Tributo();
+
+                if (pis.getPISAliq() != null) {
+                    tributoPis.setAliquota(Double.parseDouble(pis.getPISAliq().getPPIS()));
+                    tributoPis.setBaseCalculo(Double.parseDouble(pis.getPISAliq().getVBC()));
+                    tributoPis.setCst(pis.getPISAliq().getCST());
+                    tributoPis.setNome("PIS");
+                    tributoPis.setProduto(produto);
+                    tributoPis.setValor(Double.parseDouble(pis.getPISAliq().getVPIS()));
+                    em.persist(tributoPis);
+                }
+
+            } catch (JAXBException ex) {
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+                Log.gravaLog(ex.getMessage());
+            }
+
+        }
+
+    }
+
+    private static void parseTributoPisST(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
+
+        PISST pis;
+        for (Object object : jaxbImpostos) {
+            try {
+                File file = new File("pisst.xml");
+                JAXBContext contexto = JAXBContext.newInstance(PISST.class);
+                Marshaller m = contexto.createMarshaller();
+                m.marshal(object, file);
+
+                Unmarshaller u = contexto.createUnmarshaller();
+                pis = (PISST) u.unmarshal(file);
+
+                Tributo tributoPis = new Tributo();
+
+                if (pis != null) {
+                    tributoPis.setAliquota(Double.parseDouble(pis.getPPIS()));
+                    tributoPis.setBaseCalculo(Double.parseDouble(pis.getVBC()));
+                    tributoPis.setNome("PISST");
+                    tributoPis.setProduto(produto);
+                    tributoPis.setValor(Double.parseDouble(pis.getVPIS()));
+                    em.persist(tributoPis);
+                }
+
+            } catch (JAXBException ex) {
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+                Log.gravaLog(ex.getMessage());
+            }
+
+        }
+
+    }
+
+    private static void parseTributoIpi(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
+
+        TIpi ipi;
+        for (Object object : jaxbImpostos) {
+            try {
+                File file = new File("ipi.xml");
+                JAXBContext contexto = JAXBContext.newInstance(TIpi.class);
+                Marshaller m = contexto.createMarshaller();
+                m.marshal(object, file);
+
+                Unmarshaller u = contexto.createUnmarshaller();
+                ipi = (TIpi) u.unmarshal(file);
+
+                Tributo tributoIpi = new Tributo();
+
+                if (ipi.getIPITrib() != null) {
+                    tributoIpi.setAliquota(Double.parseDouble(ipi.getIPITrib().getPIPI()));
+                    tributoIpi.setBaseCalculo(Double.parseDouble(ipi.getIPITrib().getVBC()));
+                    tributoIpi.setValor(Double.parseDouble(ipi.getIPITrib().getVIPI()));
+                    tributoIpi.setCst(ipi.getIPITrib().getCST());
+                    tributoIpi.setNome("IPI");
+                    tributoIpi.setProduto(produto);
+                    em.persist(tributoIpi);
+                }
+
+            } catch (JAXBException ex) {
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+                Log.gravaLog(ex.getMessage());
+            }
+
+        }
+
+    }
+
+    private static void parseTributoISSQN(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
+
+        ISSQN issqn;
+        for (Object object : jaxbImpostos) {
+            try {
+                File file = new File("issqn.xml");
+                JAXBContext contexto = JAXBContext.newInstance(ISSQN.class);
+                Marshaller m = contexto.createMarshaller();
+                m.marshal(object, file);
+
+                Unmarshaller u = contexto.createUnmarshaller();
+                issqn = (ISSQN) u.unmarshal(file);
+
+                Tributo tributoIssQn = new Tributo();
+
+                if (issqn != null) {
+                    tributoIssQn.setAliquota(Double.parseDouble(issqn.getVAliq()));
+                    tributoIssQn.setBaseCalculo(Double.parseDouble(issqn.getVBC()));
+                    tributoIssQn.setValor(Double.parseDouble(issqn.getVISSQN()));
+                    tributoIssQn.setNome("ISSQN");
+                    tributoIssQn.setProduto(produto);
+                    em.persist(tributoIssQn);
+                }
+
+            } catch (JAXBException ex) {
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+                Log.gravaLog(ex.getMessage());
+            }
+
+        }
+
+    }
+
+    private static void parseTributoII(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
+
+        II ii;
+        for (Object object : jaxbImpostos) {
+            try {
+                File file = new File("ii.xml");
+                JAXBContext contexto = JAXBContext.newInstance(II.class);
+                Marshaller m = contexto.createMarshaller();
+                m.marshal(object, file);
+
+                Unmarshaller u = contexto.createUnmarshaller();
+                ii = (II) u.unmarshal(file);
+
+                Tributo tributoii = new Tributo();
+
+                if (ii != null) {
+                    tributoii.setBaseCalculo(Double.parseDouble(ii.getVBC()));
+                    tributoii.setValor(Double.parseDouble(ii.getVII()));
+                    tributoii.setNome("II");
+                    tributoii.setProduto(produto);
+                    em.persist(tributoii);
+                }
+
+            } catch (JAXBException ex) {
+            } catch (Exception ex) {
+                algoErrado = true;
+                em.getTransaction().rollback();
+                Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+                Log.gravaLog(ex.getMessage());
+            }
+
+        }
+
+    }
+
+    private static void parseTributoIcms(List<JAXBElement<?>> jaxbImpostos, Produto produto) throws IOException {
+
+        ICMS icms;
+        Boolean temIcms = false;
+        for (Object object : jaxbImpostos) {
+            try {
+                File file = new File("icms.xml");
+                JAXBContext contexto = JAXBContext.newInstance(ICMS.class);
+                Marshaller m = contexto.createMarshaller();
+                m.marshal(object, file);
+
+                Unmarshaller u = contexto.createUnmarshaller();
+                icms = (ICMS) u.unmarshal(file);
+
+                Tributo tributoIcms = new Tributo();
+
+                if (icms.getICMS00() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS00().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS00().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMS00().getVICMS()));
+                    tributoIcms.setCst(icms.getICMS00().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMS10() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS10().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS10().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMS10().getVICMS()));
+                    tributoIcms.setCst(icms.getICMS10().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMS20() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS20().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS20().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMS20().getVICMS()));
+                    tributoIcms.setCst(icms.getICMS20().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMS30() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS30().getPICMSST()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS30().getVBCST()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMS30().getVICMSST()));
+                    tributoIcms.setCst(icms.getICMS30().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMS51() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS51().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS51().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMS51().getVICMS()));
+                    tributoIcms.setCst(icms.getICMS51().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMS70() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS70().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS70().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMS70().getVICMS()));
+                    tributoIcms.setCst(icms.getICMS70().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMS90() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS90().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS90().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMS90().getVICMS()));
+                    tributoIcms.setCst(icms.getICMS90().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMSPart() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSPart().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSPart().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMSPart().getVICMS()));
+                    tributoIcms.setCst(icms.getICMSPart().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMSSN101() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN101().getPCredSN()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN101().getVCredICMSSN()));
+                    tributoIcms.setCst(icms.getICMSSN101().getCSOSN());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMSSN201() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN201().getPCredSN()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN201().getVCredICMSSN()));
+                    tributoIcms.setCst(icms.getICMSSN201().getCSOSN());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMSSN202() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN202().getPICMSST()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSSN202().getVBCST()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN202().getVICMSST()));
+                    tributoIcms.setCst(icms.getICMSSN202().getCSOSN());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMSSN900() != null) {
+                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN900().getPICMS()));
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSSN900().getVBC()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN900().getVICMS()));
+                    tributoIcms.setCst(icms.getICMSSN900().getCSOSN());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                } else if (icms.getICMSST() != null) {                   
+                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSST().getVBCSTDest()));
+                    tributoIcms.setValor(Double.parseDouble(icms.getICMSST().getVICMSSTDest()));
+                    tributoIcms.setCst(icms.getICMSST().getCST());
+                    tributoIcms.setNome("ICMS");
+                    tributoIcms.setProduto(produto);
+                    temIcms = true;
+                }
+
+                if (temIcms) {
+                    em.persist(tributoIcms);
+                }
+
+            } catch (JAXBException ex) {
             } catch (Exception ex) {
                 algoErrado = true;
                 em.getTransaction().rollback();

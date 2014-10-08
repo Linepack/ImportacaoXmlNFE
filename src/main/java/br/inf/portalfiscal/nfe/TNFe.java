@@ -10886,8 +10886,8 @@ public class TNFe {
                     @XmlElementRef(name = "ISSQN", namespace = "http://www.portalfiscal.inf.br/nfe", type = JAXBElement.class, required = false),
                     @XmlElementRef(name = "vTotTrib", namespace = "http://www.portalfiscal.inf.br/nfe", type = JAXBElement.class, required = false)
                 })
-                protected List<JAXBElement<?>> content;                               
-  
+                protected List<JAXBElement<?>> content;
+
                 /**
                  * Gets the rest of the content model.
                  *
@@ -10917,7 +10917,7 @@ public class TNFe {
                  *
                  *
                  * <p>
-                 * Objects of the following type(s) are allowed in the list                  {@link JAXBElement }{@code <}{@link TIpi }{@code >}
+                 * Objects of the following type(s) are allowed in the list null                 {@link JAXBElement }{@code <}{@link TIpi }{@code >}
                  * {@link JAXBElement }{@code <}{@link TNFe.InfNFe.Det.Imposto.PIS }{@code >}
                  * {@link JAXBElement }{@code <}{@link TNFe.InfNFe.Det.Imposto.II }{@code >}
                  * {@link JAXBElement }{@code <}{@link TNFe.InfNFe.Det.Imposto.PISST }{@code >}
@@ -11080,7 +11080,7 @@ public class TNFe {
                     "cofinsQtde",
                     "cofinsnt",
                     "cofinsOutr"
-                })           
+                })
                 @XmlRootElement(name = "COFINS")
                 public static class COFINS {
 
@@ -11760,6 +11760,7 @@ public class TNFe {
                     "vAliqProd",
                     "vcofins"
                 })
+                @XmlRootElement(name = "COFINSST")
                 public static class COFINSST {
 
                     @XmlElement(name = "vBC")
@@ -12612,6 +12613,7 @@ public class TNFe {
                     "icmssn500",
                     "icmssn900"
                 })
+                @XmlRootElement(name = "ICMS")
                 public static class ICMS {
 
                     @XmlElement(name = "ICMS00")
@@ -17479,6 +17481,7 @@ public class TNFe {
                     "vii",
                     "viof"
                 })
+                @XmlRootElement(name = "II")
                 public static class II {
 
                     @XmlElement(name = "vBC", required = true)
@@ -17665,6 +17668,7 @@ public class TNFe {
                     "nProcesso",
                     "indIncentivo"
                 })
+                @XmlRootElement(name = "ISSQN")
                 public static class ISSQN {
 
                     @XmlElement(name = "vBC", required = true)
@@ -18160,6 +18164,7 @@ public class TNFe {
                     "pisnt",
                     "pisOutr"
                 })
+                @XmlRootElement(name = "PIS")
                 public static class PIS {
 
                     @XmlElement(name = "PISAliq")
@@ -18839,6 +18844,7 @@ public class TNFe {
                     "vAliqProd",
                     "vpis"
                 })
+                @XmlRootElement(name = "PISST")
                 public static class PISST {
 
                     @XmlElement(name = "vBC")
