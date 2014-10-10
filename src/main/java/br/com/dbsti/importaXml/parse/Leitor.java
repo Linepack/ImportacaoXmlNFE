@@ -6,6 +6,7 @@ package br.com.dbsti.importaXml.parse;
  * and open the template in the editor.
  */
 import br.com.dbsti.importaXml.Main.Log;
+import br.com.dbsti.importaXml.Main.Tarefa;
 import br.com.dbsti.importaXml.model.Destinatario;
 import br.com.dbsti.importaXml.model.Emitente;
 import br.com.dbsti.importaXml.model.EnderecoEmitente;
@@ -129,7 +130,9 @@ public class Leitor {
                 }
 
                 nfeMestre.setCamihhoXml(pathXml);
-                nfeMestre.setCaminhoPdf(pathPdf);
+                if (pathPdf != null) {
+                    nfeMestre.setCaminhoPdf(pathPdf);
+                }
 
                 Emitente emitente = parseEmitente(nfe.getNFe().getInfNFe().getEmit());
                 nfeMestre.setNfeEmitente(emitente);
@@ -197,9 +200,15 @@ public class Leitor {
 
             EnderecoEmitente enderecoEmitente = new EnderecoEmitente();
             enderecoEmitente.setBairro(emit.getEnderEmit().getXBairro());
-            enderecoEmitente.setCep(Integer.parseInt(emit.getEnderEmit().getCEP()));
-            enderecoEmitente.setCodIbgeMunicipio(Integer.parseInt(emit.getEnderEmit().getCMun()));
-            enderecoEmitente.setCodIbgePais(Integer.parseInt(emit.getEnderEmit().getCPais()));
+            if (emit.getEnderEmit().getCEP() != null) {
+                enderecoEmitente.setCep(Integer.parseInt(emit.getEnderEmit().getCEP()));
+            }
+            if (emit.getEnderEmit().getCMun() != null) {
+                enderecoEmitente.setCodIbgeMunicipio(Integer.parseInt(emit.getEnderEmit().getCMun()));
+            }
+            if (emit.getEnderEmit().getCPais() != null) {
+                enderecoEmitente.setCodIbgePais(Integer.parseInt(emit.getEnderEmit().getCPais()));
+            }
             enderecoEmitente.setComplemento(emit.getEnderEmit().getXCpl());
             enderecoEmitente.setLogradouro(emit.getEnderEmit().getXLgr());
             enderecoEmitente.setNomeMunicipio(emit.getEnderEmit().getXMun());
@@ -314,7 +323,6 @@ public class Leitor {
             parseTributoISSQN(detalhe.getImposto().getContent(), produto);
             parseTributoII(detalhe.getImposto().getContent(), produto);
             parseTributoIcms(detalhe.getImposto().getContent(), produto);
-
         }
 
     }
@@ -324,7 +332,7 @@ public class Leitor {
         COFINS cofins;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("cofins.xml");
+                File file = new File(Tarefa.PATH_LOG + "cofins.xml");
                 JAXBContext contexto = JAXBContext.newInstance(COFINS.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -362,7 +370,7 @@ public class Leitor {
         COFINSST cofins;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("cofinsst.xml");
+                File file = new File(Tarefa.PATH_LOG + "cofinsst.xml");
                 JAXBContext contexto = JAXBContext.newInstance(COFINSST.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -399,7 +407,7 @@ public class Leitor {
         PIS pis;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("pis.xml");
+                File file = new File(Tarefa.PATH_LOG + "pis.xml");
                 JAXBContext contexto = JAXBContext.newInstance(PIS.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -436,7 +444,7 @@ public class Leitor {
         PISST pis;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("pisst.xml");
+                File file = new File(Tarefa.PATH_LOG + "pisst.xml");
                 JAXBContext contexto = JAXBContext.newInstance(PISST.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -472,7 +480,7 @@ public class Leitor {
         TIpi ipi;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("ipi.xml");
+                File file = new File(Tarefa.PATH_LOG + "ipi.xml");
                 JAXBContext contexto = JAXBContext.newInstance(TIpi.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -509,7 +517,7 @@ public class Leitor {
         ISSQN issqn;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("issqn.xml");
+                File file = new File(Tarefa.PATH_LOG + "issqn.xml");
                 JAXBContext contexto = JAXBContext.newInstance(ISSQN.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -545,7 +553,7 @@ public class Leitor {
         II ii;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("ii.xml");
+                File file = new File(Tarefa.PATH_LOG + "ii.xml");
                 JAXBContext contexto = JAXBContext.newInstance(II.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -581,7 +589,7 @@ public class Leitor {
         Boolean temIcms = false;
         for (Object object : jaxbImpostos) {
             try {
-                File file = new File("icms.xml");
+                File file = new File(Tarefa.PATH_LOG + "icms.xml");
                 JAXBContext contexto = JAXBContext.newInstance(ICMS.class);
                 Marshaller m = contexto.createMarshaller();
                 m.marshal(object, file);
@@ -592,102 +600,174 @@ public class Leitor {
                 Tributo tributoIcms = new Tributo();
 
                 if (icms.getICMS00() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS00().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS00().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMS00().getVICMS()));
+                    if (icms.getICMS00().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMS00().getPICMS()));
+                    }
+                    if (icms.getICMS00().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS00().getVBC()));
+                    }
+                    if (icms.getICMS00().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMS00().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMS00().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMS10() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS10().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS10().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMS10().getVICMS()));
+                    if (icms.getICMS10().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMS10().getPICMS()));
+                    }
+                    if (icms.getICMS10().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS10().getVBC()));
+                    }
+                    if (icms.getICMS10().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMS10().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMS10().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMS20() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS20().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS20().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMS20().getVICMS()));
+                    if (icms.getICMS20().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMS20().getPICMS()));
+                    }
+                    if (icms.getICMS20().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS20().getVBC()));
+                    }
+                    if (icms.getICMS20().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMS20().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMS20().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMS30() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS30().getPICMSST()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS30().getVBCST()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMS30().getVICMSST()));
+                    if (icms.getICMS30().getPICMSST() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMS30().getPICMSST()));
+                    }
+                    if (icms.getICMS30().getVBCST() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS30().getVBCST()));
+                    }
+                    if (icms.getICMS30().getVICMSST() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMS30().getVICMSST()));
+                    }
                     tributoIcms.setCst(icms.getICMS30().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMS51() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS51().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS51().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMS51().getVICMS()));
+                    if (icms.getICMS51().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMS51().getPICMS()));
+                    }
+                    if (icms.getICMS51().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS51().getVBC()));
+                    }
+                    if (icms.getICMS51().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMS51().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMS51().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMS70() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS70().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS70().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMS70().getVICMS()));
+                    if (icms.getICMS70().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMS70().getPICMS()));
+                    }
+                    if (icms.getICMS70().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS70().getVBC()));
+                    }
+                    if (icms.getICMS70().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMS70().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMS70().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMS90() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMS90().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS90().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMS90().getVICMS()));
+                    if (icms.getICMS90().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMS90().getPICMS()));
+                    }
+                    if (icms.getICMS90().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMS90().getVBC()));
+                    }
+                    if (icms.getICMS90().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMS90().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMS90().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMSPart() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSPart().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSPart().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMSPart().getVICMS()));
+                    if (icms.getICMSPart().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMSPart().getPICMS()));
+                    }
+                    if (icms.getICMSPart().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSPart().getVBC()));
+                    }
+                    if (icms.getICMSPart().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMSPart().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMSPart().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMSSN101() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN101().getPCredSN()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN101().getVCredICMSSN()));
+                    if (icms.getICMSSN101().getPCredSN() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN101().getPCredSN()));
+                    }
+                    if (icms.getICMSSN101().getVCredICMSSN() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMSSN101().getVCredICMSSN()));
+                    }
                     tributoIcms.setCst(icms.getICMSSN101().getCSOSN());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMSSN201() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN201().getPCredSN()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN201().getVCredICMSSN()));
+                    if (icms.getICMSSN201().getPCredSN() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN201().getPCredSN()));
+                    }
+                    if (icms.getICMSSN201().getVCredICMSSN() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMSSN201().getVCredICMSSN()));
+                    }
                     tributoIcms.setCst(icms.getICMSSN201().getCSOSN());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMSSN202() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN202().getPICMSST()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSSN202().getVBCST()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN202().getVICMSST()));
+                    if (icms.getICMSSN202().getPICMSST() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN202().getPICMSST()));
+                    }
+                    if (icms.getICMSSN202().getVBCST() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSSN202().getVBCST()));
+                    }
+                    if (icms.getICMSSN202().getVICMSST() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMSSN202().getVICMSST()));
+                    }
                     tributoIcms.setCst(icms.getICMSSN202().getCSOSN());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
                 } else if (icms.getICMSSN900() != null) {
-                    tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN900().getPICMS()));
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSSN900().getVBC()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMSSN900().getVICMS()));
+                    if (icms.getICMSSN900().getPICMS() != null) {
+                        tributoIcms.setAliquota(Double.parseDouble(icms.getICMSSN900().getPICMS()));
+                    }
+                    if (icms.getICMSSN900().getVBC() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSSN900().getVBC()));
+                    }
+                    if (icms.getICMSSN900().getVICMS() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMSSN900().getVICMS()));
+                    }
                     tributoIcms.setCst(icms.getICMSSN900().getCSOSN());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);
                     temIcms = true;
-                } else if (icms.getICMSST() != null) {                   
-                    tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSST().getVBCSTDest()));
-                    tributoIcms.setValor(Double.parseDouble(icms.getICMSST().getVICMSSTDest()));
+                } else if (icms.getICMSST() != null) {
+                    if (icms.getICMSST().getVBCSTDest() != null) {
+                        tributoIcms.setBaseCalculo(Double.parseDouble(icms.getICMSST().getVBCSTDest()));
+                    }
+                    if (icms.getICMSST().getVICMSSTDest() != null) {
+                        tributoIcms.setValor(Double.parseDouble(icms.getICMSST().getVICMSSTDest()));
+                    }
                     tributoIcms.setCst(icms.getICMSST().getCST());
                     tributoIcms.setNome("ICMS");
                     tributoIcms.setProduto(produto);

@@ -76,7 +76,7 @@ public class Email {
                         downloadAnexo(contentType, mmp, contador);
                     }
                     if (nomeDoArquivoXml != null) {
-                        Leitor.ler(diretorio + nomeDoArquivoXml, diretorio + nomeDoArquivoPdf);
+                        Leitor.ler(diretorio + nomeDoArquivoXml, (nomeDoArquivoPdf != null ? (diretorio + nomeDoArquivoPdf): null));
                     }
                 }
 
