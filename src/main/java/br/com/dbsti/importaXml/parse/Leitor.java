@@ -84,6 +84,11 @@ public class Leitor {
             em.getTransaction().rollback();
             Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
             Log.gravaLog(ex.getMessage());
+        }catch(ClassCastException ex){
+            algoErrado = true;
+            em.getTransaction().rollback();
+            Logger.getLogger(Leitor.class.getName()).log(Level.SEVERE, null, ex);
+            Log.gravaLog(ex.getMessage());
         }
 
     }
